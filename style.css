@@ -18,14 +18,15 @@ header {
 .container {
     max-width: 800px;
     margin: 40px auto;
-    background: #ffffff;
+    background: #c9e3e8;
     padding: 20px;
     box-shadow: 0px 0px 15px rgba(0,0,0,0.1);
     border-radius: 10px;
 }
 
 h2, h3 {
-    color: #4682B4;
+	text-align: center;
+    color: #42646E;
 }
 
 input, select, button {
@@ -54,13 +55,13 @@ button:hover {
 
 .actions {
     display: flex;
-    justify-content: center; /* Centraliza os botões horizontalmente */
-    flex-wrap: wrap; /* Permite que os botões quebrem para a próxima linha em telas menores */
-    gap: 10px; /* Adiciona um espaço entre os botões */
-	}
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
 
 .actions button {
-    background-color: #42646E; /* Côr dos botões de consulta */
+    background-color: #42646E;
     color: white;
     border: none;
     border-radius: 5px;
@@ -85,6 +86,7 @@ table th, table td {
     border: 1px solid #ccc;
     padding: 8px;
     text-align: center;
+    white-space: nowrap; /* Impede a quebra de linha */
 }
 
 table th {
@@ -131,14 +133,27 @@ table {
     border-collapse: collapse;
 }
 
-table th, table td {
-    white-space: nowrap;
-}
-
 footer {
-	color: white;
+    color: white;
     text-align: center;
     margin-top: 20px;
     padding: 6px;
     background-color: #42646E;
+}
+
+/* Para telas menores (até 600px de largura) */
+@media (max-width: 600px) {
+    table {
+        font-size: 0.8em; /* Reduz o tamanho da fonte */
+    }
+
+    table th, table td {
+        padding: 5px; /* Reduz o preenchimento das células */
+    }
+
+    /* Oculta colunas menos importantes, se necessário */
+    /* table th:nth-child(5),
+    table td:nth-child(5) {
+        display: none;
+    } */
 }
