@@ -1,0 +1,49 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #F0F8FF;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #42646E;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    color: white;
+    font-size: 35px;
+    font-weight: bold;
+}
+
+h2, h3 {
+    text-align: center;
+    color: #42646E;
+}
+
+footer {
+    color: black;
+    text-align: center;
+    margin-top: 20px;
+    padding: 6px;
+    background-color: #42646E;
+}
+
+.message {
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    display: none;
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}

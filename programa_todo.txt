@@ -1,0 +1,1289 @@
+1 - index.html
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Robalos</title>
+    <head>
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="forms.css">
+    <link rel="stylesheet" href="tables.css">
+    <link rel="stylesheet" href="charts.css">
+    <link rel="stylesheet" href="print.css">
+    <link rel="stylesheet" href="responsive.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <h1>Captura de Robalos</h1>
+		<nav>
+        <ul>
+            <li><a href="https://www.ipma.pt/pt/otempo/prev.localidade.hora/#Aveiro&Ovar" target="_blank"><i class="fas fa-cloud-sun"></i> METEREOLOGIA</a></li>
+            <li><a href="https://tabuademares.com/pt/porto/leixoes" target="_blank"><i class="fas fa-water"></i> MARÉS</a></li>
+			<li><a href="https://pt.windfinder.com/forecasts/" target="_blank"><i class="fas fa-wind"></i> MAR</a></li>
+		</ul>
+    </nav>
+    </header>
+    <div class="container">
+        <section class="registo-captura">
+            <h2>Registo de captura</h2>
+            <div class="message success" id="messageSuccess">Registo gravado com sucesso!</div>
+            <div class="message error" id="messageError">Preencha todos os campos correctamente!</div>
+
+            <label for="dataCaptura">Data da Captura:</label>
+            <input type="date" id="dataCaptura" placeholder="Data da Captura">
+            <input type="number" id="peso" placeholder="Peso (g)" step="1" min="1">
+            <input type="number" id="tamanho" placeholder="Tamanho (cm)" step="1" min="1">
+            <select id="concelho">
+                <option value="">Seleccione um concelho</option>
+            </select>
+            <select id="local">
+                <option value="">Seleccione um local</option>
+            </select>
+            <select id="tipoAmostra">
+                <option value="">Seleccione o tipo de amostra</option>
+                <option value="Amostra">Amostra</option>
+                <option value="Borracha">Borracha</option>
+                <option value="Vinil">Vinil</option>
+                <option value="Zagaia">Zagaia</option>
+            </select>
+            <div class="gravar">
+                <button onclick="gravarCaptura()"><i class="fas fa-save"></i> Gravar</button>
+            </div>
+        </section>
+
+        <section class="consulta-capturas" id="consultaCapturas">
+            <h3>Consultar capturas</h3>
+            <div class="registo-captura">
+                <select id="anoConsulta"></select>
+            </div>
+            <div class="actions">
+                <button onclick="consultarCapturas()">
+                    <i class="fas fa-search"></i> Detalhe capturas ano seleccionado
+                </button>
+                <button onclick="consultarResumoPorLocal()">
+                    <i class="fas fa-chart-bar"></i> Análise por Local-Ano (tabela e gráfico)
+                </button>
+                <button onclick="imprimirCapturas()">
+                    <i class="fas fa-print"></i> Imprimir detalhe-Ano
+                </button>
+                <button onclick="abrirResumoGeral()">
+                    <i class="fa-solid fa-medal"></i> ANÁLISE GERAL CAPTURAS-ANOS
+                </button>
+            </div>
+            <div class="table-container">
+                <table id="tabelaCapturas">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Peso (g)</th>
+                            <th>Tamanho (cm)</th>
+                            <th>Local</th>
+                            <th>Amostra</th>
+                            <th>Remover</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="analise">
+            <h3 id="totaisAno"></h3>
+            <div class="table-container">
+                <div id="resumoLocais"></div>
+            </div>
+			    <select id="tipoDado" onchange="consultarResumoPorLocal()">
+                <option value="capturas">Total Capturas</option>
+                <option value="peso">Peso Total (g)</option>
+				</select>
+            <input type="color" id="corBarra" value="#4682B4" onchange="consultarResumoPorLocal()">
+
+            <div class="chart-container">
+                <canvas id="graficoResumoPorLocal"></canvas>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-info">
+                <p>JCunha (v1-2025)</p>
+            </div>
+        </footer>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="utils.js"></script>
+        <script src="charts.js"></script>
+        <script src="print.js"></script>
+        <script src="script.js"></script>
+        <script src="locais.js"></script>
+    </div>
+</body>
+</html>
+
+2 - charts.js
+
+function consultarResumoPorLocal() {
+    let ano = document.getElementById("anoConsulta").value;
+    let capturas = JSON.parse(localStorage.getItem("capturas")) || [];
+    let filtradas = capturas.filter(c => c.data.startsWith(ano));
+    let resumo = {};
+
+    filtradas.forEach(c => {
+        if (!resumo[c.local]) {
+            resumo[c.local] = { totalCapturas: 0, totalPeso: 0 };
+        }
+        resumo[c.local].totalCapturas++;
+        resumo[c.local].totalPeso += c.peso;
+    });
+
+    let resumoArray = Object.entries(resumo).sort((a, b) => b[1].totalCapturas - a[1].totalCapturas);
+
+    let tabelaResumo = `<table>
+        <tr>
+            <th>Local</th>
+            <th>Total Capturas</th>
+            <th>Peso Total (g)</th>
+        </tr>`;
+    tabelaResumo += resumoArray.map(([local, dados]) => `
+        <tr>
+            <td>${local}</td>
+            <td>${dados.totalCapturas.toLocaleString("pt-BR")}</td>
+            <td>${dados.totalPeso.toLocaleString("pt-BR")}</td>
+        </tr>
+    `).join("");
+    tabelaResumo += `</table>`;
+
+    document.getElementById("resumoLocais").innerHTML = tabelaResumo;
+
+    let labels = resumoArray.map(([local, _]) => local);
+    let capturasData = resumoArray.map(([_, dados]) => dados.totalCapturas);
+    let pesoData = resumoArray.map(([_, dados]) => dados.totalPeso);
+
+    let tipoDado = document.getElementById("tipoDado").value;
+    let dadosExibir = tipoDado === "capturas" ? capturasData : pesoData;
+    let labelDado = tipoDado === "capturas" ? "Total Capturas" : "Peso Total (g)";
+    let corBarra = tipoDado === "peso" ? "chartreuse" : document.getElementById("corBarra").value;
+
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    let ctx = document.getElementById("graficoResumoPorLocal").getContext("2d");
+    window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: labelDado,
+                data: dadosExibir,
+                backgroundColor: corBarra,
+                borderColor: corBarra.replace('0.6', '1'),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: tipoDado === "capturas" ? "Total" : "Peso (g)"
+                    },
+                    ticks: {
+                        callback: function (value, index, values) {
+                            return value.toLocaleString('pt-BR');
+                        }
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Locais'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Resumo por Local (${ano}) - ${labelDado}`,
+                    font: {
+                        size: 18
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y.toLocaleString('pt-BR');
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+3 - locais.js
+
+const concelhosLocais = [
+    {
+        concelho: "Aveiro",
+        locais: ["S.Jacinto", "Molho Norte"]
+    },
+   
+	{
+        concelho: "Gaia",
+        locais: ["Aguda", "Barroso", "Bloqueira-Vld", "Canide", "Francelos", "Granja", "Miramar", "Piriri", "Valadares"]
+    },
+	{
+        concelho: "Grândola",
+        locais: ["Aberta Nova", "Carvalhal", "Comporta", "Galé", "Melides", "Pêgo", "Pinheirinho", "Raposa", "Santo André"]
+    },
+	{
+        concelho: "Murtosa",
+        locais: ["Bico Espanhola", "Califa", "Carreira Tiro", "Orbitur", "Rubirosa", "Rubirosa norte", "Ramada", "Tricana", "Viveiros"]
+    },
+	 {
+        concelho: "Ovar",
+        locais: ["Furadouro Norte", "Furadouro Sul","Maceda", "Marilia", "Marretas"]
+    },
+	{
+        concelho: "Porto-Matosinhos",
+        locais: ["Agudela", "Aldeia Nova", "Aterro", "Boa Nova", "Cabo Mundo", "Corgo", "Facho", "Foz", "Fuzelhas", "Homem do Leme", "Marreco"]
+    },
+  ];
+  
+  4 - print.js
+  
+  // print.js
+window.imprimirCapturas = function () {
+    try {
+        let ano = document.getElementById("anoConsulta").value;
+        let capturas = JSON.parse(localStorage.getItem("capturas")) || [];
+        let filtradas = capturas.filter(c => c.data.startsWith(ano));
+        filtradas.sort((a, b) => new Date(a.data) - new Date(b.data));
+        let totalCapturas = filtradas.length;
+        let pesoTotal = filtradas.reduce((acc, c) => acc + c.peso, 0);
+
+        let janelaImpressao = window.open("", "_blank");
+        janelaImpressao.document.write(`
+            <html>
+            <head>
+                <title>Capturas de Robalo - ${ano}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; color: #000080; }
+                    table { width: 100%; border-collapse: collapse; text-align: center; margin-top: 20px; }
+                    table, th, td { border: 1px solid black; }
+                    th, td { padding: 10px; }
+                    th { background-color: #1E90FF; color: white; }
+                    h2 { color: #000080; }
+                </style>
+            </head>
+            <body>
+                <h2>Relótorio de Capturas de Robalo - ${ano}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Peso (g)</th>
+                            <th>Tamanho (cm)</th>
+                            <th>Tipo de Amostra</th>
+                            <th>Local</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtradas.map(captura => `
+                            <tr>
+                                <td>${new Date(captura.data).toLocaleDateString("pt-pt")}</td>
+                                <td>${captura.peso.toLocaleString("pt-BR")}</td>
+                                <td>${captura.tamanho}</td>
+                                <td>${captura.tipoAmostra}</td>
+                                <td>${captura.local}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+                <h3>Total de capturas: ${totalCapturas}</h3>
+                <h3>Peso total: ${pesoTotal.toLocaleString("pt-BR")}g</h3>
+            </body>
+            </html>
+        `);
+        janelaImpressao.document.close();
+        janelaImpressao.print();
+    } catch (error) {
+        console.error("Erro ao imprimir capturas:", error);
+        alert("Ocorreu um erro ao imprimir as capturas. Consulte o console para mais detalhes.");
+    }
+}
+
+window.abrirResumoGeral = function () {
+    try {
+        let capturas = JSON.parse(localStorage.getItem("capturas")) || [];
+        let anos = [...new Set(capturas.map(c => c.data.substring(0, 4)))];
+        let resumoPorAno = {};
+        let resumoGeral = { totalCapturas: 0, totalPeso: 0, locais: {}, amostras: {} };
+
+        anos.forEach(ano => {
+            resumoPorAno[ano] = {
+                totalCapturas: 0,
+                totalPeso: 0,
+                locais: {},
+                amostras: {},
+                robaloMaisPesado: { peso: 0, data: '' },
+                meses: {}
+            };
+        });
+
+        capturas.forEach(c => {
+            let ano = c.data.substring(0, 4);
+            let mes = new Date(c.data).getMonth();
+            resumoPorAno[ano].totalCapturas++;
+            resumoPorAno[ano].totalPeso += c.peso;
+            resumoGeral.totalCapturas++;
+            resumoGeral.totalPeso += c.peso;
+
+            resumoPorAno[ano].locais[c.local] = (resumoPorAno[ano].locais[c.local] || 0) + 1;
+            resumoGeral.locais[c.local] = (resumoGeral.locais[c.local] || 0) + 1;
+
+            resumoPorAno[ano].amostras[c.tipoAmostra] = (resumoPorAno[ano].amostras[c.tipoAmostra] || 0) + 1;
+            resumoGeral.amostras[c.tipoAmostra] = (resumoGeral.amostras[c.tipoAmostra] || 0) + 1;
+
+            if (c.peso > resumoPorAno[ano].robaloMaisPesado.peso) {
+                resumoPorAno[ano].robaloMaisPesado.peso = c.peso;
+                resumoPorAno[ano].robaloMaisPesado.data = c.data;
+            }
+
+            resumoPorAno[ano].meses[mes] = (resumoPorAno[ano].meses[mes] || 0) + 1;
+        });
+
+        function encontrarLocalMaisCapturas(locais, total) {
+            if (Object.keys(locais).length === 0) return 'N/A';
+            let local = Object.keys(locais).reduce((a, b) => locais[a] > locais[b] ? a : b);
+            let percentagem = total > 0 ? ((locais[local] / total) * 100).toFixed(2) + '%' : 'N/A';
+            return `${local} (${percentagem})`;
+        }
+
+        function encontrarAmostraMaisUsada(amostras, total) {
+            let amostra = Object.keys(amostras).reduce((a, b) => amostras[a] > amostras[b] ? a : b, null);
+            let percentagem = total > 0 ? ((amostras[amostra] / total) * 100).toFixed(2) + '%' : 'N/A';
+            return amostra ? `${amostra} (${percentagem})` : 'N/A';
+        }
+
+        function encontrarMesMaisCapturas(meses) {
+            if (Object.keys(meses).length === 0) return 'N/A';
+            let mes = Object.keys(meses).reduce((a, b) => meses[a] > meses[b] ? a : b);
+            let nomeMes = new Date(2000, mes, 1).toLocaleString('default', { month: 'long' });
+            let total = Object.values(meses).reduce((acc, val) => acc + val, 0);
+            let percentagem = ((meses[mes] / total) * 100).toFixed(2) + '%';
+            return `${nomeMes} (${percentagem})`;
+        }
+
+        let html = `
+            <html>
+            <head><title>Resumo Geral de Capturas</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                th { background-color: #f2f2f2; }
+                .total { font-weight: bold; background-color: #e0e0e0; }
+                button { margin-top: 20px; padding: 10px 20px; cursor: pointer; }
+                @media print { button { display: none; } }
+            </style>
+            </head>
+            <body>
+                <h2>Resumo Geral de Capturas</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ano</th>
+                            <th>Total Capturas</th>
+                            <th>Peso Total (g)</th>
+                            <th>Robalo Mais Pesado (g)</th>
+                            <th>Mês Mais Capturas</th>
+                            <th>Local Mais Capturas</th>
+                            <th>Amostra Mais Usada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${anos.map(ano => `
+                            <tr>
+                                <td>${ano}</td>
+                                <td>${resumoPorAno[ano].totalCapturas.toLocaleString('pt-BR')}</td>
+                                <td>${resumoPorAno[ano].totalPeso.toLocaleString('pt-BR')}</td>
+                                <td>${resumoPorAno[ano].robaloMaisPesado.peso.toLocaleString('pt-BR')}</td>
+                                <td>${encontrarMesMaisCapturas(resumoPorAno[ano].meses)}</td>
+                                <td>${encontrarLocalMaisCapturas(resumoPorAno[ano].locais, resumoPorAno[ano].totalCapturas)}</td>
+                                <td>${encontrarAmostraMaisUsada(resumoPorAno[ano].amostras, resumoPorAno[ano].totalCapturas)}</td>
+                            </tr>
+                        `).join('')}
+                        <tr class="total">
+                            <td>Geral</td>
+                            <td>${resumoGeral.totalCapturas}</td>
+                            <td>${resumoGeral.totalPeso.toLocaleString('pt-BR')}</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>${encontrarLocalMaisCapturas(resumoGeral.locais, resumoGeral.totalCapturas)}</td>
+                            <td>${encontrarAmostraMaisUsada(resumoGeral.amostras, resumoGeral.totalCapturas)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button onclick="window.print()">Imprimir</button>
+            </body>
+            </html>
+        `;
+
+        let novaJanela = window.open('', '_blank');
+        novaJanela.document.write(html);
+    } catch (error) {
+        console.error("Erro ao abrir resumo geral:", error);
+        alert("Ocorreu um erro ao abrir o resumo geral. Consulte o console para mais detalhes.");
+    }
+}
+
+console.log(window.imprimirCapturas, window.abrirResumoGeral); // Verifica se as funções estão definidas
+
+5 - script.js
+
+document.addEventListener("DOMContentLoaded", () => {
+    carregarDados();
+    preencherAnos();
+
+    document.getElementById("concelho").addEventListener("change", function() {
+        atualizarLocaisOrdenados();
+    });
+});
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log("Service Worker registrado!"))
+        .catch(error => console.log("Erro no Service Worker:", error));
+}
+
+function carregarDados() {
+    let concelhoSelect = document.getElementById("concelho");
+    let localSelect = document.getElementById("local");
+
+    concelhoSelect.innerHTML = '<option value="">Selecione um concelho</option>';
+    localSelect.innerHTML = '<option value="">Selecione um local</option>';
+
+    concelhosLocais.forEach(concelho => {
+        let option = document.createElement("option");
+        option.value = concelho.concelho;
+        option.textContent = concelho.concelho;
+        concelhoSelect.appendChild(option);
+    });
+}
+
+function atualizarLocaisOrdenados() {
+    let concelhoSelect = document.getElementById("concelho");
+    let localSelect = document.getElementById("local");
+    let concelhoSelecionado = concelhoSelect.value;
+
+    localSelect.innerHTML = '<option value="">Selecione um local</option>';
+
+    if (concelhoSelecionado) {
+        let concelhoEncontrado = concelhosLocais.find(c => c.concelho === concelhoSelecionado);
+        if (concelhoEncontrado) {
+            concelhoEncontrado.locais.forEach(local => {
+                let option = document.createElement("option");
+                option.value = local;
+                option.textContent = local;
+                localSelect.appendChild(option);
+            });
+        }
+    }
+}
+
+function gravarCaptura() {
+    let data = document.getElementById("dataCaptura").value;
+    let peso = parseInt(document.getElementById("peso").value);
+    let tamanho = parseInt(document.getElementById("tamanho").value);
+    let concelho = document.getElementById("concelho").value;
+    let localSelect = document.getElementById("local");
+    let local = localSelect.value;
+    let tipoAmostra = document.getElementById("tipoAmostra").value;
+
+    if (!data || isNaN(peso) || peso <= 0 || isNaN(tamanho) || tamanho < 36 || !concelho || !local || !tipoAmostra || new Date(data) > new Date()) {
+        exibirMensagem('error', 'Preencha todos os campos correctamente e use uma data válida! Tamanho legal de pelo menos 36 cm.');
+        return;
+    }
+
+    let capturas = JSON.parse(localStorage.getItem("capturas")) || [];
+    capturas.push({ data, peso, tamanho, local, tipoAmostra });
+    localStorage.setItem("capturas", JSON.stringify(capturas));
+
+    setTimeout(atualizarLocaisOrdenados, 0);
+    exibirMensagem('success', 'Registro gravado com sucesso!');
+    carregarDados();
+    preencherAnos(); // Adicionado para actualizar os anos após gravar
+}
+
+function consultarCapturas() {
+    let ano = document.getElementById("anoConsulta").value;
+    let capturas = JSON.parse(localStorage.getItem("capturas")) || [];
+    let filtradas = capturas.filter(c => c.data.startsWith(ano));
+    filtradas.sort((a, b) => new Date(a.data) - new Date(b.data));
+
+    let tabela = document.getElementById("tabelaCapturas").querySelector("tbody");
+    tabela.innerHTML = "";
+
+    filtradas.forEach(captura => {
+        let linha = tabela.insertRow();
+        let data = new Date(captura.data);
+        let dataFormatada = data.toLocaleDateString("pt-pt");
+
+        linha.insertCell(0).textContent = dataFormatada;
+        linha.insertCell(1).textContent = captura.peso.toLocaleString("pt-BR");
+        linha.insertCell(2).textContent = captura.tamanho;
+        linha.insertCell(3).textContent = captura.local;
+        linha.insertCell(4).textContent = captura.tipoAmostra;
+
+        let btnRemover = document.createElement("button");
+        btnRemover.textContent = "X";
+        btnRemover.style.padding = "5px 10px";
+        btnRemover.style.fontSize = "16px";
+        btnRemover.style.width = "35px";
+        btnRemover.style.height = "35px";
+        btnRemover.style.border = "none";
+        btnRemover.style.backgroundColor = "#ff4d4d";
+        btnRemover.style.color = "#ffffff";
+        btnRemover.style.borderRadius = "50%";
+        btnRemover.style.cursor = "pointer";
+        btnRemover.style.display = "block";
+        btnRemover.style.margin = "0 auto";
+        btnRemover.innerHTML = '<i class="fa fa-trash"></i>';
+        btnRemover.onclick = () => removerCaptura(captura.data, captura.peso, captura.tamanho, captura.local, captura.tipoAmostra);
+        linha.insertCell(5).appendChild(btnRemover);
+    });
+
+    document.getElementById("totaisAno").textContent = `Total de capturas: ${filtradas.length}, Peso total: ${filtradas.reduce((acc, c) => acc + c.peso, 0).toLocaleString("pt-BR")}g`;
+}
+
+function removerCaptura(data, peso, tamanho, local, tipoAmostra) {
+    if (confirm("Tem certeza que deseja remover esta captura?")) {
+        let capturas = JSON.parse(localStorage.getItem("capturas")) || [];
+        let index = capturas.findIndex(c => c.data === data && c.peso === peso && c.tamanho === tamanho && c.local === local && c.tipoAmostra === tipoAmostra);
+
+        if (index !== -1) {
+            capturas.splice(index, 1);
+            localStorage.setItem("capturas", JSON.stringify(capturas));
+            consultarCapturas();
+            exibirMensagem("success", "Captura removida com sucesso!");
+        } else {
+            exibirMensagem("error", "Erro ao remover a captura.");
+        }
+    }
+}
+
+function preencherAnos() {
+    let capturas = JSON.parse(localStorage.getItem("capturas")) || [];
+    let anos = [...new Set(capturas.map(c => new Date(c.data).getFullYear()))].sort((a, b) => b - a);
+    let anoSelect = document.getElementById("anoConsulta");
+    anoSelect.innerHTML = ""; // Limpa o select antes de preencher
+
+    anos.forEach(ano => {
+        let option = document.createElement("option");
+        option.value = ano;
+        option.textContent = ano;
+        anoSelect.appendChild(option);
+    });
+}
+
+6 - service-worker.js
+
+self.addEventListener("install", (event) => {
+    event.waitUntil(
+        caches.open("robalo-cache").then((cache) => {
+            return cache.addAll([
+                "index.html",
+                "style.css",
+                "script.js",
+                "icon.png"
+            ]);
+        })
+    );
+});
+
+self.addEventListener("fetch", (event) => {
+    event.respondWith(
+        caches.match(event.request).then((response) => {
+            return response || fetch(event.request);
+        })
+    );
+});
+
+7 - utils.js
+
+function exibirMensagem(tipo, mensagem) {
+    const msgElement = document.getElementById(tipo === 'success' ? 'messageSuccess' : 'messageError');
+    msgElement.textContent = mensagem;
+    msgElement.style.display = 'block';
+    setTimeout(() => msgElement.style.display = 'none', 3000);
+}
+
+function carregarDados() {
+    let capturas = JSON.parse(localStorage.getItem("capturas")) || [];
+    let locais = [...new Set(capturas.map(c => c.local))];
+    let select = document.getElementById("local");
+    select.innerHTML = '<option value="">seleccione ou digite um local</option>' + locais.map(loc => `<option value="${loc}">${loc}</option>`).join("");
+    carregarAnos();
+}
+
+function carregarAnos() {
+    let capturas = JSON.parse(localStorage.getItem("capturas")) || [];
+    let anos = [...new Set(capturas.map(c => c.data.substring(0, 4)))];
+    let selectAno = document.getElementById("anoConsulta");
+    anos.sort((a, b) => b - a);
+    selectAno.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join("");
+}
+
+8 - base.css
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #F0F8FF;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #42646E;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    color: white;
+    font-size: 35px;
+    font-weight: bold;
+}
+
+h2, h3 {
+    text-align: center;
+    color: #42646E;
+}
+
+footer {
+    color: white;
+    text-align: center;
+    margin-top: 20px;
+    padding: 6px;
+    background-color: #42646E;
+}
+
+.message {
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    display: none;
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+9 - forms.css
+
+input, select, button {
+    width: calc(100% - 20px);
+    max-width: 300px;
+    padding: 6px;
+    margin: 10px 0;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    text-align: center;
+}
+
+button {
+    background-color: #4682B4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+button:hover {
+    background-color: #5A9BD4;
+}
+
+.consulta-capturas .actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 300px;
+    margin-top: 20px;
+}
+
+.consulta-capturas .actions button {
+    width: 300px;
+    margin: 10px 0;
+    text-align: center;
+    display: grid;
+    place-items: center;
+}
+
+.actions button {
+    width: calc(100% - 20px);
+    max-width: 300px;
+    background-color: #42646E;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 10px 15px;
+    font-size: 14px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease;
+    margin: 10px 0;
+    display: grid;
+    place-items: center;
+}
+
+.actions button i {
+    font-size: 16px;
+}
+
+.actions button:hover {
+    background-color: #5A9BD4;
+}
+
+.gravar button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100px;
+    height: 40px;
+    line-height: 40px;
+}
+
+#totaisAno {
+    text-align: center;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+#tipoDado, #corBarra {
+    width: auto;
+    margin: 10px auto;
+    display: block;
+}
+
+#corBarra {
+    height: 40px;
+    border: none;
+    width: 100%;
+    max-width: 300px;
+}
+
+#concelho, #local {
+    max-width: 300px;
+}
+
+.registo-captura input,
+.registo-captura select {
+    max-width: 300px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: center;
+}
+
+10 - layout.css
+
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: #c9e3e8;
+    padding: 20px;
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.registo-captura {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-container {
+    width: 95%;
+    overflow-x: auto;
+    display: block;
+}
+
+.chart-container {
+    width: 100%;
+    height: 400px;
+    margin-top: 30px;
+}
+nav ul {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin: 10px 0; /* Adiciona um pouco de margem acima e abaixo da barra de navegação */
+    background-color: #f8f9fa; /* Exemplo de cor de fundo para a barra de navegação */
+    border-radius: 5px; /* Opcional: bordas arredondadas */
+    padding: 10px; /* Adiciona um pouco de padding interno */
+}
+
+nav ul li {
+    margin: 0 20px;
+}
+
+nav ul li a {
+    display: block;
+    text-align: center;
+    color: #28a745; /* Exemplo de cor verde para os links */
+	font-weight: bold;
+    font-size: 1.1em;
+    text-decoration: none; /* Remove o sublinhado padrão dos links */
+}
+
+nav ul li a:hover {
+    color: #1e7e34; /* Cor mais escura no hover */
+}
+
+nav ul li a i {
+    margin-right: 5px; /* Adiciona um espaço entre o ícone e o texto */
+}
+
+11 - print.css
+
+@media print {
+    button {
+        display: none;
+    }
+}
+
+12 - responsive.css
+
+@media (max-width: 600px) {
+    table {
+        font-size: 10px;
+    }
+
+    table th, table td {
+        padding: 6px;
+        white-space: normal;
+    }
+
+    table th:nth-child(1),
+    table td:nth-child(1) {
+        width: 15%;
+    }
+
+    table th:nth-child(2),
+    table td:nth-child(2) {
+        width: 10%;
+    }
+
+    table th:nth-child(3),
+    table td:nth-child(3) {
+        width: 10%;
+    }
+
+    table th:nth-child(4),
+    table td:nth-child(4) {
+        width: 20%;
+    }
+
+    table th:nth-child(5),
+    table td:nth-child(5) {
+        width: 18%;
+    }
+
+    table th:nth-child(6),
+    table td:nth-child(6) {
+        width: 13%;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        display: block;
+    }
+
+    table {
+        display: block;
+        white-space: nowrap;
+    }
+
+    table td:last-child button {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    /* Adicionado para ajustar a largura dos campos de registo e botões de consulta em telas menores */
+    input, select, .consulta-capturas .actions button {
+        width: 100%;
+    }
+}
+
+13 - style.css
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #F0F8FF;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #42646E;
+    text-align: center;
+	padding: 20px;
+}
+
+h1 {
+	color: white;
+	font-size: 25px;
+    font-weight: bold;
+}
+	
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: #c9e3e8;
+    padding: 20px;
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+h2, h3 {
+	text-align: center;
+    color: #42646E;
+}
+
+input, select, button {
+    width: calc(100% - 20px);
+    padding: 6px;
+    margin: 10px 0;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+}
+
+button {
+    background-color: #4682B4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+button:hover {
+    background-color: #5A9BD4;
+}
+
+.consulta-capturas .actions {
+    display: flex;
+    flex-direction: column; /* Coloca os botões em coluna */
+    align-items: center; /* Centraliza os botões horizontalmente */
+    justify-content: center; /* Centraliza os botões verticalmente */
+    width: 100%; /* Garante que o contêiner dos botões ocupe toda a largura */
+    min-height: 300px; /* Garante uma altura mínima para centralização vertical */
+    margin-top: 20px; /* Adiciona espaço acima dos botões */
+}
+
+.consulta-capturas .actions button {
+    width: 300px;
+    margin: 10px 0;
+    text-align: center;
+    display:grid;
+    place-items:center;
+}
+
+.actions button {
+    width: calc(100% - 20px);
+    max-width: 300px;
+    background-color: #42646E;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 10px 15px;
+    font-size: 14px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease;
+    margin: 10px 0;
+    display: grid;
+    place-items: center;
+}
+
+.actions button i {
+    font-size: 16px;
+}
+
+.actions button:hover {
+    background-color: #5A9BD4;
+}
+
+.gravar button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Espaço entre o ícone e o texto */
+    width: 100px;
+    height: 40px; /* Ajuste a altura para centralizar melhor */
+	line-height: 40px;
+}
+
+
+
+.pppactions button:last-child {
+    margin-right: 0;
+}
+
+.registo-captura {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px; /* Espaço uniforme entre os elementos */
+}
+
+
+.registo-captura input,
+.registo-captura select {
+    width: 100%;
+    max-width: 300px; /* Garante um tamanho fixo */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+	text-align: center;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+    white-space: nowrap; /* Impede a quebra de linha */
+}
+
+/* Estilo para os cabeçalhos da tabela (th) */
+table th {
+    background-color: #4682B4; /* Mantém a cor de fundo azul */
+    color: black; /* Texto preto */
+    /* font-weight: bold; /* Texto em negrito */
+    text-transform: uppercase; /* Opcional: Deixa o texto em maiúsculas */
+}
+
+.message {
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    display: none;
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+@media print {
+    button { display: none; }
+}
+
+.chart-container {
+    width: 100%;
+    height: 400px;
+    margin-top: 30px;
+}
+
+.table-container {
+    width: 95%;
+    overflow-x: auto;
+    display: block;
+
+}
+
+table {
+    max-width: 100%;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+footer {
+    color: white;
+    text-align: center;
+    margin-top: 20px;
+    padding: 6px;
+    background-color: #42646E;
+}
+
+/* ... (seu CSS existente) ... */
+
+/* Para telas menores (até 600px de largura) */
+@media (max-width: 600px) {
+    table {
+        font-size: 10px;
+    }
+
+    table th, table td {
+        padding: 6px; /* Ajustei o padding para melhor espaçamento */
+        white-space: normal; /* Permite quebras de linha */
+    }
+
+    /* Ajuste de largura das colunas */
+    table th:nth-child(1), table td:nth-child(1) { /* Data */
+        width: 15%;
+    }
+    table th:nth-child(2), table td:nth-child(2) { /* Peso */
+        width: 10%;
+    }
+    table th:nth-child(3), table td:nth-child(3) { /* Tamanho */
+        width: 10%;
+    }
+    table th:nth-child(4), table td:nth-child(4) { /* Local */
+        width: 20%;
+    }
+    table th:nth-child(5), table td:nth-child(5) { /* Amostra */
+        width: 18%;
+    }
+    table th:nth-child(6), table td:nth-child(6) { /* Remover */
+        width: 13%;
+    }
+
+    /* Habilita rolagem horizontal */
+    .table-container {
+        overflow-x: auto;
+        display: block;
+    }
+
+    table {
+        display: block;
+        white-space: nowrap;
+    }
+
+    /* Ajuste para o botão "Remover" */
+    table td:last-child button {
+        padding: 8px 12px; /* Aumenta o padding do botão */
+        font-size: 12px; /* Aumenta o tamanho da fonte do botão */
+    }
+}
+
+14 - tables.css
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+table th {
+    background-color: #4682B4;
+    color: black;
+}
+
+15 - manifest.json
+
+{
+  "name": "Capturas de Robalos",
+  "short_name": "Robalos",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4682B4",
+  "description": "Uma aplicação para registar e consultar capturas de robalos.",
+  "categories": ["desporto", "pesca"],
+  "icons": [
+{
+"src": "icon-48x48.png",
+"sizes": "48x48",
+"type": "image/png"
+},
+{
+"src": "icon-72x72.png",
+"sizes": "72x72",
+"type": "image/png"
+},
+{
+"src": "icon-96x96.png",
+"sizes": "96x96",
+"type": "image/png"
+},
+{
+"src": "icon-144x144.png",
+"sizes": "144x144",
+"type": "image/png"
+},
+{
+"src": "icon-192x192.png",
+"sizes": "192x192",
+"type": "image/png"
+},
+{
+"src": "icon-512x512.png",
+"sizes": "512x512",
+"type": "image/png"
+},
+{
+"src": "icon.png",
+"sizes": "192x192",
+"type": "image/png",
+"purpose": "any maskable"
+}
+],
+"screenshots": [
+{
+"src": "screenshot1.png",
+"sizes": "640x480",
+"type": "image/png",
+"form_factor": "wide"
+},
+{
+"src": "screenshot2.png",
+"sizes": "320x480",
+"type": "image/png",
+"form_factor": "narrow"
+}
+]
+}
+

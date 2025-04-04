@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Robalos</title>
+    <head>
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="forms.css">
+    <link rel="stylesheet" href="tables.css">
+    <link rel="stylesheet" href="charts.css">
+    <link rel="stylesheet" href="print.css">
+    <link rel="stylesheet" href="responsive.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <h1>Captura de Robalos</h1>
+		<nav>
+        <ul>
+            <li><a href="https://www.ipma.pt/pt/otempo/prev.localidade.hora/#Aveiro&Ovar" target="_blank"><i class="fas fa-cloud-sun"></i> METEREOLOGIA</a></li>
+            <li><a href="https://tabuademares.com/pt/porto/leixoes" target="_blank"><i class="fas fa-water"></i> MARÉS</a></li>
+			<li><a href="https://pt.windfinder.com/forecasts/" target="_blank"><i class="fas fa-wind"></i> MAR</a></li>
+		</ul>
+    </nav>
+    </header>
+    <div class="container">
+        <section class="registo-captura">
+            <h2>Registo de captura</h2>
+            <div class="message success" id="messageSuccess">Registo gravado com sucesso!</div>
+            <div class="message error" id="messageError">Preencha todos os campos correctamente!</div>
+
+            <label for="dataCaptura">Data da Captura:</label>
+            <input type="date" id="dataCaptura" placeholder="Data da Captura">
+            <input type="number" id="peso" placeholder="Peso (g)" step="1" min="1">
+            <input type="number" id="tamanho" placeholder="Tamanho (cm)" step="1" min="1">
+            <select id="concelho">
+                <option value="">Seleccione um concelho</option>
+            </select>
+            <select id="local">
+                <option value="">Seleccione um local</option>
+            </select>
+            <select id="tipoAmostra">
+                <option value="">Seleccione o tipo de amostra</option>
+                <option value="Amostra">Amostra</option>
+                <option value="Borracha">Borracha</option>
+                <option value="Vinil">Vinil</option>
+                <option value="Zagaia">Zagaia</option>
+            </select>
+            <div class="gravar">
+                <button onclick="gravarCaptura()"><i class="fas fa-save"></i> Gravar</button>
+            </div>
+        </section>
+
+        <section class="consulta-capturas" id="consultaCapturas">
+            <h3>Consultar capturas</h3>
+            <div class="registo-captura">
+                <select id="anoConsulta"></select>
+            </div>
+            <div class="actions">
+                <button onclick="consultarCapturas()">
+                    <i class="fas fa-search"></i> Detalhe capturas ano seleccionado
+                </button>
+                <button onclick="consultarResumoPorLocal()">
+                    <i class="fas fa-chart-bar"></i> Análise por Local-Ano (tabela e gráfico)
+                </button>
+                <button onclick="imprimirCapturas()">
+                    <i class="fas fa-print"></i> Imprimir detalhe-Ano
+                </button>
+                <button onclick="abrirResumoGeral()">
+                    <i class="fa-solid fa-medal"></i> ANÁLISE GERAL CAPTURAS-ANOS
+                </button>
+				<button onclick="limparTabelaCapturas()">
+				<i class="fas fa-eraser"></i> Limpar Detalhe-Ano
+				</button>
+            </div>
+            <div class="table-container">
+                <table id="tabelaCapturas">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Peso (g)</th>
+                            <th>Tamanho (cm)</th>
+                            <th>Local</th>
+                            <th>Amostra</th>
+                            <th>Remover</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="analise">
+            <h3 id="totaisAno"></h3>
+            <div class="table-container">
+                <div id="resumoLocais"></div>
+            </div>
+			    <select id="tipoDado" onchange="consultarResumoPorLocal()">
+                <option value="capturas">Total Capturas</option>
+                <option value="peso">Peso Total (g)</option>
+				</select>
+            <input type="color" id="corBarra" value="#4682B4" onchange="consultarResumoPorLocal()">
+
+            <div class="chart-container">
+                <canvas id="graficoResumoPorLocal"></canvas>
+            </div>
+			<div class="actions">
+				<button onclick="limparAnalise()">
+					<i class="fas fa-eraser"></i> Limpar Análise Local-Ano
+						</button>
+			</div>
+        </section>
+
+        <footer>
+            <div class="footer-info">
+                <p>JCunha (v1-2025)</p>
+            </div>
+        </footer>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="utils.js"></script>
+        <script src="charts.js"></script>
+        <script src="print.js"></script>
+        <script src="script.js"></script>
+        <script src="locais.js"></script>
+    </div>
+</body>
+</html>

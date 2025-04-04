@@ -1,0 +1,122 @@
+input, select, button {
+    width: calc(100% - 20px);
+    max-width: 300px;
+    padding: 6px;
+    margin: 10px 0;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    text-align: center;
+}
+
+button {
+    background-color: #4682B4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+button:hover {
+    background-color: #5A9BD4;
+}
+
+.consulta-capturas .actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 300px;
+    margin-top: 20px;
+}
+
+.consulta-capturas .actions button {
+    width: 300px;
+    margin: 10px 0;
+    text-align: center;
+    display: grid;
+    place-items: center;
+}
+
+.actions button {
+    width: calc(100% - 20px);
+    max-width: 300px;
+    background-color: #42646E;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 10px 15px;
+    font-size: 14px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease;
+    margin: 10px 0;
+    display: grid;
+    place-items: center;
+}
+
+.actions button i {
+    font-size: 16px;
+}
+
+.actions button:hover {
+    background-color: #5A9BD4;
+}
+
+.analise .actions {
+    display: flex;
+    justify-content: center; /* Centraliza horizontalmente os itens dentro da div */
+    width: 100%; /* Garante que a div ocupe a largura total */
+    margin-top: 10px; /* Adiciona um pouco de espaço acima do botão */
+}
+
+.analise .actions button {
+    /* Pode manter os estilos existentes para o botão */
+    max-width: 300px; /* Se quiser limitar a largura máxima */
+    width: calc(100% - 20px); /* Ou ajustar conforme necessário */
+}
+.gravar button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100px;
+    height: 40px;
+    line-height: 40px;
+}
+
+#totaisAno {
+    text-align: center;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+#tipoDado, #corBarra {
+    width: auto;
+    margin: 10px auto;
+    display: block;
+}
+
+#corBarra {
+    height: 40px;
+    border: none;
+    width: 100%;
+    max-width: 300px;
+}
+
+#concelho, #local {
+    max-width: 300px;
+}
+
+.registo-captura input,
+.registo-captura select {
+    max-width: 300px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: center;
+}
